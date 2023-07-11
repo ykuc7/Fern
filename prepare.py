@@ -3,6 +3,7 @@
 import sys
 import re
 
+
 def skip_excess(file_path):
     with open(file_path, 'r', encoding='shift-jis') as file:
         lines = file.readlines()
@@ -15,7 +16,7 @@ def skip_excess(file_path):
             last_dash_index = len(lines) - 1 - i
             break
 
-    newline_count = 0 
+    newline_count = 0
     # スキップする行以外の行を処理
     for line in lines[last_dash_index + 1:]:
         line = line.strip()
@@ -27,13 +28,15 @@ def skip_excess(file_path):
             newline_count += 1
             if newline_count >= 2:
                 break
-            
+
     return ret
+
 
 def remove_enclosed_text(text):
     pattern = r'《[^》]+》|\[[^\]]+\]|［[^］]+］'
     result = re.sub(pattern, '', text)
     return result
+
 
 def insert_punctuation(text):
     if len(text) <= 30:
@@ -41,9 +44,34 @@ def insert_punctuation(text):
 
     for i in range(30, 0, -1):
         if text[i] in {',', '.', '!', '?', '。', '、'}:
-            return text[:i+1] + '\n' + insert_punctuation(text[i+1:])
+            return text[:i + 1] + '\n' + insert_punctuation(text[i + 1:])
 
     return text[:30] + '\n' + insert_punctuation(text[30:])
+
+
+def insert_line_breaks(text):
+    result = ''
+    line_length = 0
+    i = 0
+    while i < len(text):
+        char = text[i]
+        result += char
+        line_length += 1
+
+        if line_length >= 30 and (char in {'.', '。', '、', '」'}):
+            if i + 1 < len(text) and text[i + 1] == '」':
+                i += 1
+                result += text[i + 1]
+                result += '\n'
+                line_length = 0
+            else:
+                result += '\n'
+                line_length = 0
+
+        i += 1
+
+    return result
+
 
 def remove_leading_spaces(text):
     lines = text.split('\n')
@@ -56,12 +84,15 @@ def remove_leading_spaces(text):
     result = '\n'.join(cleaned_lines)
     return result
 
+
 def process_text(text):
     cleaned_text = remove_enclosed_text(text)
     cleaned_text = remove_leading_spaces(cleaned_text)
-    processed_text = insert_punctuation(cleaned_text)
+    # processed_text = insert_punctuation(cleaned_text)
+    processed_text = insert_line_breaks(cleaned_text)
 
     return processed_text
+
 
 def write_to_file(file_path, text):
     try:
@@ -70,6 +101,7 @@ def write_to_file(file_path, text):
         print(f"処理結果をファイル '{file_path}' に保存しました。")
     except:
         print(f"エラー: ファイル '{file_path}' への書き込み中に問題が発生しました。")
+
 
 def main():
     if len(sys.argv) < 2:
@@ -85,6 +117,7 @@ def main():
 
         output_file_path = "prepared.txt"
         write_to_file(output_file_path, processed_text)
+
 
 if __name__ == "__main__":
     main()
