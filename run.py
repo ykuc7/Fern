@@ -3,6 +3,7 @@
 import sys
 import csv
 
+
 def create_csv_file(text_file_path):
     output_csv_path = 'output.csv'  # 出力CSVファイルのパス
     column_a_text = 'ずんだもん'  # A列に入れる任意の文字列
@@ -16,6 +17,7 @@ def create_csv_file(text_file_path):
             line = line.strip()
             writer.writerow([column_a_text, line])
 
+
 def main():
     if len(sys.argv) < 2:
         print("Usage: python script.py input_file.txt")
@@ -24,6 +26,7 @@ def main():
     text_file_path = sys.argv[1]  # 入力テキストファイルのパス
 
     create_csv_file(text_file_path)
+
 
 if __name__ == '__main__':
     main()

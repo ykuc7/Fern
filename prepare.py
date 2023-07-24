@@ -1,7 +1,9 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
+import pprint
 import sys
 import re
+import json
 
 
 def skip_excess(file_path):
@@ -32,21 +34,39 @@ def skip_excess(file_path):
     return ret
 
 
+def extract_ruby_pairs(text):
+    ruby_pattern = r'《(.*?)》'  # ルビを抽出する正規表現パターン
+    matches = re.split(ruby_pattern, text)
+    kanji_list = extract_kanji(text)
+
+    ruby_dict = {}
+    sentences = matches[0::2]
+    rubies = matches[1::2]
+
+    for i, sentence in enumerate(sentences):
+        kanji = ''
+        for char in reversed(sentence):
+            if char not in kanji_list:
+                break
+            kanji = char + kanji
+        if kanji:
+            ruby_dict[kanji] = rubies[i]
+
+    pprint.pprint(ruby_dict)
+
+    return ruby_dict
+
+
+def extract_kanji(text):
+    kanji_pattern = r'[\u4E00-\u9FFF]+'  # Unicodeで漢字の範囲を指定
+    kanji_list = re.findall(kanji_pattern, text)
+    return kanji_list
+
+
 def remove_enclosed_text(text):
     pattern = r'《[^》]+》|\[[^\]]+\]|［[^］]+］'
     result = re.sub(pattern, '', text)
     return result
-
-
-def insert_punctuation(text):
-    if len(text) <= 30:
-        return text
-
-    for i in range(30, 0, -1):
-        if text[i] in {',', '.', '!', '?', '。', '、'}:
-            return text[:i + 1] + '\n' + insert_punctuation(text[i + 1:])
-
-    return text[:30] + '\n' + insert_punctuation(text[30:])
 
 
 def insert_line_breaks(text):
@@ -85,10 +105,36 @@ def remove_leading_spaces(text):
     return result
 
 
+def export_ruby_json(pairs):
+    word_sets = []
+    for k, v in pairs.items():
+        word_sets.append({
+            'IsEnabled': True,
+            'From': k,
+            'To': v,
+            'IsRegex': False,
+            'IgnoreCase': False,
+            'Description': ''
+        })
+
+    data = {
+        'WordSets': word_sets,
+        'PronouncingSets': [],
+    }
+    dst_path_main = './YukkuriMovieMaker.KanjiToYomi.UserDictionary.json'
+    dst_path_bak = './YukkuriMovieMaker.KanjiToYomi.UserDictionary.json.bak'
+    with open(dst_path_main, mode="wt", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+    with open(dst_path_bak, mode="wt", encoding="utf-8") as f:
+        json.dump(data, f, ensure_ascii=False, indent=2)
+
+
 def process_text(text):
+    pairs = extract_ruby_pairs(text)
+    export_ruby_json(pairs)
     cleaned_text = remove_enclosed_text(text)
     cleaned_text = remove_leading_spaces(cleaned_text)
-    # processed_text = insert_punctuation(cleaned_text)
     processed_text = insert_line_breaks(cleaned_text)
 
     return processed_text

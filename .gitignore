@@ -163,3 +163,5 @@ cython_debug/
 *.txt
 *.csv
 .idea
+*.json
+*.json.bak
