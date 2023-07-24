@@ -144,7 +144,7 @@ def write_to_file(file_path, text):
     try:
         with open(file_path, "w", encoding="utf-8") as file:
             file.write(text)
-        print(f"処理結果をファイル '{file_path}' に保存しました。")
+        print(f"処理結果をファイル '{file_path}' に保存しました。\n")
     except:
         print(f"エラー: ファイル '{file_path}' への書き込み中に問題が発生しました。")
 
@@ -159,10 +159,13 @@ def main():
     processed_text = process_text(text)
 
     if processed_text:
-        print("処理後の文字列:", processed_text)
+        print(f"処理後の文字列:{processed_text}")
 
         output_file_path = "prepared.txt"
         write_to_file(output_file_path, processed_text)
+
+        print(f"読みのファイルをjsonとbakファイルで出力しています。")
+        print(f"YukkuriMovieMaker4/user/setting/<version> 以下にコピーしてymmを再起動してください")
 
 
 if __name__ == "__main__":
