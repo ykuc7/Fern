@@ -60,7 +60,10 @@ def extract_ruby_pairs(text):
 def extract_kanji(text):
     kanji_pattern = r'[\u4E00-\u9FFF]+'  # Unicodeで漢字の範囲を指定
     kanji_list = re.findall(kanji_pattern, text)
-    return kanji_list
+    ret = ''.join(kanji_list)
+    ret = ''.join(set(ret))
+    # print(ret)
+    return ret
 
 
 def remove_enclosed_text(text):
