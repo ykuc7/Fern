@@ -78,6 +78,10 @@ def insert_line_breaks(text):
     i = 0
     while i < len(text):
         char = text[i]
+        if char is '\n':
+            i += 1
+            continue
+
         result += char
         line_length += 1
 
@@ -100,7 +104,7 @@ def remove_leading_spaces(text):
     lines = text.split('\n')
     cleaned_lines = []
 
-    for line in lines:
+    for i, line in enumerate(lines):
         cleaned_line = line.lstrip(' 　')  # 半角スペースと全角スペースを除去
         cleaned_lines.append(cleaned_line)
 
