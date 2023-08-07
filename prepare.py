@@ -87,10 +87,10 @@ def insert_line_breaks(text):
 
         if line_length >= 30 and (char in {'.', '。', '、', '」'}):
             if i + 1 < len(text) and text[i + 1] == '」':
-                i += 1
                 result += text[i + 1]
                 result += '\n'
                 line_length = 0
+                i += 1
             else:
                 result += '\n'
                 line_length = 0
