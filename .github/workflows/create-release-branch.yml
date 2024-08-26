@@ -1,0 +1,31 @@
+name: Create Release Branch
+
+on:
+  workflow_dispatch:
+    inputs:
+      version_name:
+        description: 'Release version name'
+        required: true
+        default: 'v3.X.X'
+
+jobs:
+  create-release-branch:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout main branch
+        uses: actions/checkout@v3
+        with:
+          ref: main
+
+      - name: Create release branch
+        run: |
+          git config --global user.email "your-email@example.com"
+          git config --global user.name "your-username"
+          git checkout -b release/${{ github.event.inputs.version_name }}
+
+      - name: Push release branch
+        run: |
+          git push origin release/${{ github.event.inputs.version_name }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
