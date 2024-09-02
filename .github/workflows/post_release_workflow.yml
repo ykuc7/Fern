@@ -1,9 +1,10 @@
-name: Automated Workflow
+name: Post Release Workflow
 
 on:
   push:
     branches:
       - 'release/*'  # release/* ブランチパターンを指定
+  workflow_dispatch:  # ブラウザからの手動実行を許可
 
 jobs:
   create_tag:
@@ -14,9 +15,15 @@ jobs:
 
       - name: Extract tag name from branch
         id: extract_tag
-        run: echo "TAG_NAME=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+        run: |
+          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
+            echo "No branch context in workflow_dispatch, skipping tag creation."
+            exit 0
+          fi
+          echo "TAG_NAME=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
 
       - name: Create tag
+        if: ${{ github.event_name != 'workflow_dispatch' }}  # 手動実行時にはスキップ
         run: |
           git tag $TAG_NAME
           git push origin $TAG_NAME
@@ -32,8 +39,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: 'Release ${{ env.TAG_NAME }}'
+          tag_name: ${{ env.TAG_NAME || 'manual-trigger' }}  # 手動実行時のデフォルトタグ名
+          release_name: 'Release ${{ env.TAG_NAME || 'manual-trigger' }}'
           draft: true
           prerelease: false
         env:
@@ -51,7 +58,7 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           branch: develop
-          title: 'Merge Release ${{ env.TAG_NAME }} to Develop'
+          title: 'Merge Release ${{ env.TAG_NAME || 'manual-trigger' }} to Develop'
           commit-message: 'Automated PR to merge release branch to develop'
           body: 'This PR merges the latest changes from the release branch to develop.'
           base: develop
