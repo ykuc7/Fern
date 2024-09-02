@@ -1,0 +1,60 @@
+name: Automated Workflow
+
+on:
+  push:
+    branches:
+      - 'release/*'  # release/* ブランチパターンを指定
+
+jobs:
+  create_tag:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Extract tag name from branch
+        id: extract_tag
+        run: echo "TAG_NAME=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
+
+      - name: Create tag
+        run: |
+          git tag $TAG_NAME
+          git push origin $TAG_NAME
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAG_NAME: ${{ env.TAG_NAME }}
+
+  create_release_draft:
+    needs: create_tag
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create Release Draft
+        id: create_release
+        uses: actions/create-release@v1
+        with:
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: 'Release ${{ env.TAG_NAME }}'
+          draft: true
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  create_pr:
+    needs: create_release_draft
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v2
+
+      - name: Create Pull Request to develop
+        id: create_pr
+        uses: peter-evans/create-pull-request@v5
+        with:
+          branch: develop
+          title: 'Merge Release ${{ env.TAG_NAME }} to Develop'
+          commit-message: 'Automated PR to merge release branch to develop'
+          body: 'This PR merges the latest changes from the release branch to develop.'
+          base: develop
+          head: ${{ github.ref }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
