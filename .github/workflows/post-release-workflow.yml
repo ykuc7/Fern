@@ -1,10 +1,12 @@
-name: Post Release Workflow
+name: Automated Workflow
 
 on:
-  push:
-    branches:
-      - 'release/*'  # release/* ブランチパターンを指定
-  workflow_dispatch:  # ブラウザからの手動実行を許可
+  workflow_dispatch:  # 手動実行を許可するトリガー
+    inputs:
+      tag_name:
+        description: 'Tag name for the release'  # ユーザーが入力するタグ名の説明
+        required: true  # 必須入力
+        default: ''  # デフォルトの値（空に設定）
 
 jobs:
   create_tag:
@@ -13,23 +15,12 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v2
 
-      - name: Extract tag name from branch
-        id: extract_tag
-        run: |
-          if [ "${{ github.event_name }}" == "workflow_dispatch" ]; then
-            echo "No branch context in workflow_dispatch, skipping tag creation."
-            exit 0
-          fi
-          echo "TAG_NAME=${GITHUB_REF#refs/heads/release/}" >> $GITHUB_ENV
-
       - name: Create tag
-        if: ${{ github.event_name != 'workflow_dispatch' }}  # 手動実行時にはスキップ
         run: |
-          git tag $TAG_NAME
-          git push origin $TAG_NAME
+          git tag ${{ github.event.inputs.tag_name }}
+          git push origin ${{ github.event.inputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ env.TAG_NAME }}
 
   create_release_draft:
     needs: create_tag
@@ -39,8 +30,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ env.TAG_NAME || 'manual-trigger' }}  # 手動実行時のデフォルトタグ名
-          release_name: 'Release ${{ env.TAG_NAME || 'manual-trigger' }}'
+          tag_name: ${{ github.event.inputs.tag_name }}
+          release_name: 'Release ${{ github.event.inputs.tag_name }}'
           draft: true
           prerelease: false
         env:
@@ -58,10 +49,10 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           branch: develop
-          title: 'Merge Release ${{ env.TAG_NAME || 'manual-trigger' }} to Develop'
+          title: 'Merge Release ${{ github.event.inputs.tag_name }} to Develop'
           commit-message: 'Automated PR to merge release branch to develop'
           body: 'This PR merges the latest changes from the release branch to develop.'
           base: develop
-          head: ${{ github.ref }}
+          head: ${{ github.event.inputs.tag_name }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
