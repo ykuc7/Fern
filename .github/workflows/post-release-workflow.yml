@@ -23,6 +23,14 @@ jobs:
           TAG_NAME="${GITHUB_REF#refs/heads/release/}"
           echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_OUTPUT
 
+      - name: Create tag
+        run: |
+          git tag ${{ steps.extract_tag.outputs.TAG_NAME }}
+          git push origin ${{ steps.extract_tag.outputs.TAG_NAME }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+  
+
   create_release_draft:
     needs: create_tag
     runs-on: ubuntu-latest
