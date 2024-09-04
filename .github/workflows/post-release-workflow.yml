@@ -28,12 +28,13 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create Release Draft
-        uses: actions/create-release@v1.1.4
+        uses: release-drafter/release-drafter@v6
         with:
-          tag_name: ${{ needs.create_tag.outputs.TAG_NAME }}
-          release_name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
-          draft: true
+          tag: ${{ needs.create_tag.outputs.TAG_NAME }}
+          name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
+          version: ${{ needs.create_tag.outputs.TAG_NAME }}
           prerelease: false
+          publish: false
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
   create_pr:
