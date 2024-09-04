@@ -21,13 +21,11 @@ jobs:
           # `release/`プレフィックスを取り除く
           TAG_NAME="${GITHUB_REF#refs/heads/release/}"
           echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
-        outputs:
-          TAG_NAME: ${{ steps.extract_tag.outputs.TAG_NAME }}
 
       - name: Create tag
         run: |
-          git tag ${{ steps.extract_tag.outputs.TAG_NAME }}
-          git push origin ${{ steps.extract_tag.outputs.TAG_NAME }}
+          git tag ${{ env.TAG_NAME }}
+          git push origin ${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
@@ -39,8 +37,8 @@ jobs:
         id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ needs.create_tag.outputs.TAG_NAME }}
-          release_name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
+          tag_name: ${{ env.TAG_NAME }}
+          release_name: 'Release ${{ env.TAG_NAME }}'
           draft: true
           prerelease: false
         env:
@@ -58,10 +56,10 @@ jobs:
         uses: peter-evans/create-pull-request@v5
         with:
           branch: ${{ github.event.inputs.target_branch }}  # マージ先のブランチを指定
-          title: 'Merge Release from release/${{ needs.create_tag.outputs.TAG_NAME }} to ${{ github.event.inputs.target_branch }}'
+          title: 'Merge Release from release/${{ env.TAG_NAME }} to ${{ github.event.inputs.target_branch }}'
           commit-message: 'Automated PR to merge release branch to target branch'
           body: 'This PR merges the latest changes from the release branch to the target branch.'
           base: ${{ github.event.inputs.target_branch }}
-          head: release/${{ needs.create_tag.outputs.TAG_NAME }}
+          head: release/${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
