@@ -15,20 +15,20 @@ jobs:
       TAG_NAME: ${{ steps.extract_tag.outputs.TAG_NAME }}
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Extract tag name from branch
         id: extract_tag
         run: |
           TAG_NAME="${GITHUB_REF#refs/heads/release/}"
-          echo "::set-output name=TAG_NAME::${TAG_NAME}"
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
 
   create_release_draft:
     needs: create_tag
     runs-on: ubuntu-latest
     steps:
       - name: Create Release Draft
-        uses: actions/create-release@v1
+        uses: actions/create-release@v1.1.4
         with:
           tag_name: ${{ needs.create_tag.outputs.TAG_NAME }}
           release_name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
@@ -41,10 +41,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
 
       - name: Create Pull Request to target branch
-        uses: peter-evans/create-pull-request@v5
+        uses: peter-evans/create-pull-request@v6
         with:
           branch: ${{ github.ref_name }}  # Current branch (source branch)
           title: 'Merge Release from ${{ github.ref_name }} to ${{ github.event.inputs.target_branch }}'
