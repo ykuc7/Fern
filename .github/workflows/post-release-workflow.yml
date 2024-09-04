@@ -30,8 +30,8 @@ jobs:
       - name: Create Release Draft
         uses: actions/create-release@v1.1.4
         with:
-          tag_name: ${{ steps.extract_tag.outputs.TAG_NAME }}
-          release_name: 'Release ${{ steps.extract_tag.outputs.TAG_NAME }}'
+          tag_name: ${{ steps.create_tag.outputs.TAG_NAME }}
+          release_name: 'Release ${{ steps.create_tag.outputs.TAG_NAME }}'
           draft: true
           prerelease: false
         env:
