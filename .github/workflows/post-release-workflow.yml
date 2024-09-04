@@ -28,7 +28,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: Create Release Draft
-        uses: release-drafter/release-drafter@v6
+        uses: release-drafter/release-drafter@v5
         with:
           tag: ${{ needs.create_tag.outputs.TAG_NAME }}
           name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
