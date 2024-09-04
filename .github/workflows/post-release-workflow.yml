@@ -21,7 +21,7 @@ jobs:
         id: extract_tag
         run: |
           TAG_NAME="${GITHUB_REF#refs/heads/release/}"
-          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
+          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_OUTPUT
 
   create_release_draft:
     needs: create_tag
@@ -30,8 +30,8 @@ jobs:
       - name: Create Release Draft
         uses: actions/create-release@v1.1.4
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: 'Release ${{ env.TAG_NAME }}'
+          tag_name: ${{ steps.extract_tag.outputs.TAG_NAME }}
+          release_name: 'Release ${{ steps.extract_tag.outputs.TAG_NAME }}'
           draft: true
           prerelease: false
         env:
