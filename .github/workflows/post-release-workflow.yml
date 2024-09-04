@@ -1,16 +1,18 @@
 name: Automated Workflow
 
 on:
-  workflow_dispatch:  # 手動実行を許可するトリガー
+  workflow_dispatch:
     inputs:
       target_branch:
         description: 'The target branch to merge the source branch into'
         required: true
-        default: 'develop'  # デフォルトのマージ先ブランチを指定
+        default: 'develop'
 
 jobs:
   create_tag:
     runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.extract_tag.outputs.TAG_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v2
@@ -18,48 +20,19 @@ jobs:
       - name: Extract tag name from branch
         id: extract_tag
         run: |
-          # `release/`プレフィックスを取り除く
           TAG_NAME="${GITHUB_REF#refs/heads/release/}"
-          echo "TAG_NAME=${TAG_NAME}" >> $GITHUB_ENV
-
-      - name: Create tag
-        run: |
-          git tag ${{ env.TAG_NAME }}
-          git push origin ${{ env.TAG_NAME }}
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          echo "::set-output name=TAG_NAME::${TAG_NAME}"
 
   create_release_draft:
     needs: create_tag
     runs-on: ubuntu-latest
     steps:
       - name: Create Release Draft
-        id: create_release
         uses: actions/create-release@v1
         with:
-          tag_name: ${{ env.TAG_NAME }}
-          release_name: 'Release ${{ env.TAG_NAME }}'
+          tag_name: ${{ needs.create_tag.outputs.TAG_NAME }}
+          release_name: 'Release ${{ needs.create_tag.outputs.TAG_NAME }}'
           draft: true
           prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
-  create_pr:
-    needs: create_release_draft
-    runs-on: ubuntu-latest
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v2
-
-      - name: Create Pull Request to target branch
-        id: create_pr
-        uses: peter-evans/create-pull-request@v5
-        with:
-          branch: ${{ github.event.inputs.target_branch }}  # マージ先のブランチを指定
-          title: 'Merge Release from release/${{ env.TAG_NAME }} to ${{ github.event.inputs.target_branch }}'
-          commit-message: 'Automated PR to merge release branch to target branch'
-          body: 'This PR merges the latest changes from the release branch to the target branch.'
-          base: ${{ github.event.inputs.target_branch }}
-          head: release/${{ env.TAG_NAME }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
